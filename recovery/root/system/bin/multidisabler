@@ -1,0 +1,366 @@
+#!/system/bin/sh
+#
+# A simple Samsung services disabler by Ian Macdonald.
+#
+# Use this to prime your device after installing TWRP.
+
+DEBUG=true
+scr_wdth=50
+
+# Detect real $OUTFD
+#
+if readlink /proc/$$/fd/$OUTFD 2>/dev/null | grep /tmp >/dev/null; then
+  OUTFD=0
+  for FD in $( ls /proc/$$/fd ); do
+    if readlink /proc/$$/fd/$FD 2>/dev/null | grep pipe >/dev/null; then
+      if ps | grep " 3 $FD " | grep -v grep >/dev/null; then
+	OUTFD=$FD
+	break
+      fi
+    fi
+  done
+fi
+
+ui_print() {
+  echo -ne "ui_print $1\n" >> /proc/self/fd/$OUTFD
+  echo -ne "ui_print\n" >> /proc/self/fd/$OUTFD
+}
+
+debug_print() {
+  [ "$DEBUG" = true ] && ui_print "$*"
+}
+
+print_full_bar() {
+  ui_print "$(printf '%*s\n' $scr_wdth | tr ' ' '=')"
+}
+
+print_justified() {
+  local str="$1"
+  local str_len=${#str}
+  local padding_len=$(( ($scr_wdth - $str_len - 2) / 2))
+  local ljust="$(printf '%*s' $padding_len)"
+  local rjust="$(printf '%*s' $(($padding_len + $str_len % 2)))"
+
+  ui_print "=$ljust$str$rjust="
+}
+
+md5() {
+  md5sum -b "$1"
+}
+
+file_changed() {
+  local file="$1"
+  local old_md5="$2"
+  local new_md5=$( md5 "$file" )
+
+  if [ $new_md5 != $old_md5 ]; then
+    debug_print " -     ...modified."
+  else
+    debug_print " -     ...unchanged."
+  fi
+}
+
+disable_vaultkeeper() {
+  local md5
+  local i
+
+  ui_print " - Disabling vaultkeeper..."
+
+  if [ $major -gt 9 ]; then
+    # This is Android 10/11:/12/13: Vaultkeeper has its own init files.
+    #
+    for i in $ANDROID_ROOT/system/etc/init/vk*.rc /vendor/etc/init/vk*.rc /vendor/etc/init/vaultkeeper_common.rc; do
+      if [ -f $i ]; then
+	ui_print " -   Found $i."
+	md5=$( md5 $i )
+	sed -i -e 's/^[^#].*$/# &/' $i
+	file_changed $i $md5
+      fi
+    done
+  else
+    # This is Android 9: Vaultkeeper is started from init.rc.
+    #
+    sed -i -e 's/^[^#].*vaultkeeper.*$/# &/' \
+	-re '/\/system\/bin\/vaultkeeperd/,/^#?$/s/^[^#]*$/#&/' $ANDROID_ROOT/init.rc
+  fi
+  
+  #DISABLE PRISM VAULTKEEPER
+    mount /prism
+	VAULT="/prism/etc/init/init.rc"
+	if [ -f "$VAULT" ]; then
+		sed -i 's/start\ scs/stop\ scs/g' $VAULT
+		ui_print " - Disabling prism vaultkeeper..."
+	else
+		ui_print " - Not found prism vaultkeeper..."
+	fi
+
+  # Qualcomm devices such as the T860 and T865 need this, otherwise the log
+  # will be spammed with messages about failed connections to the Vaultkeeper
+  # service.
+  #
+  rm_from_manifest vaultkeeper
+
+  for i in $ANDROID_ROOT/system /vendor; do
+    if [ -f $i/bin/vaultkeeperd ]; then
+      ui_print " -   Found $i/bin/vaultkeeperd. Disabling..."
+      chmod 0 $i/bin/vaultkeeperd
+    fi
+    if [ -f $i/bin/vendor.samsung.hardware.security.vaultkeeper@2.0-service ]; then
+      chmod 0 $i/bin/vendor.samsung.hardware.security.vaultkeeper@2.0-service
+    fi
+  done
+}
+
+disable_cass() {
+  local md5
+  local i
+
+  # The T860 needs this. Otherwise, the log will fill with messages like this:
+  #
+  # 10-20 03:23:20.501 27757 27757 E CASS: Failed to connect(4)
+  # 10-20 03:23:20.501 27757 27757 E CASS: Failed to connect ril daemon(2). Retry cnt(6)
+  # The F907B on Android 10 also needs it:
+  #
+  # 04-05 22:21:23.519  3599  3599 E CASS_DEBUG: VaultKeeper is not ready. try again.
+  # 04-05 22:21:23.519  3599  3599 I CASS_DEBUG: Disconnect ril daemon
+  # 04-05 22:21:23.519  3599  3599 I CASS_DEBUG: Failed to connect ril daemon(1). Retry cnt(2)
+  #
+  # As of OneUI 2.5, other devices need it, too; even Exynos.
+  #
+  ui_print " - Disabling cass..."
+
+  for i in $ANDROID_ROOT/init.rc /vendor/init/cass.rc /vendor/etc/init/cass.rc; do
+    if [ -f $i ]; then
+      ui_print " -   Found $i. Disabling..."
+      md5=$( md5 $i )
+      sed -i -e 's/^[^#].*cass.*$/# &/' -re '/\/(system|vendor)\/bin\/cass/,/^#?$/s/^[^#]*$/#&/' $i
+      file_changed $i $md5
+    fi
+  done
+  sed -i 's/ro\.security\.cass\.feature\=1/ro\.security\.cass\.feature\=0/g' /vendor/build.prop
+}
+
+disable_proca() {
+  local md5
+  local i
+
+  ui_print " - Disabling process authentication..."
+
+  # G97[035]F = pa_daemon.rc on Android 9; pa_daemon_teegris.rc on Android 10.
+  # G977B, N97[05]F, A105F, A505F = pa_daemon_teegris.rc
+  # T510 + T515 = pa_daemon_kinibi.rc
+  # T860 + T865 = pa_daemon_qsee.rc
+  #
+  for i in /vendor/etc/init/pa_daemon*.rc; do
+    if [ -f $i ]; then
+      ui_print " -   Found $i. Disabling..."
+      sed -i -e 's/^[^#]/# &/' $i
+      file_changed $i $md5
+    fi
+  done
+
+  rm_from_manifest proca
+}
+
+disable_fbe() {
+  local md5
+  local i
+  fstab_files=`grep -lr 'fileencryption' vendor/etc`
+
+  # Exynos devices = fstab.exynos*.
+  # MediaTek devices = fstab.mt*.
+  # Snapdragon devices = fstab.qcom, fstab.emmc, fstab.default
+  #
+  for i in $fstab_files; do
+    if [ -f $i ]; then
+      ui_print " - Disabling file-based encryption (FBE) for /data..."
+      ui_print " -   Found $i."
+      md5=$( md5 $i )
+      # Fully remove everything related to encryption. "encryptable" is deprecated and results in a bootloop
+      sed -i -e 's/\,fileencryption\=aes\-256\-xts\:aes\-256\-cts\:v2\+inlinecrypt\_optimized\,wrappedkey\,//g' -e 's/\,keydirectory\=\/metadata\/vold\/metadata\_encryption//g' \
+             -e 's/\,inlinecrypt//g' -e 's/\,wrappedkey//g' $i      # This comments out the offending line and adds an edited one.
+      sed -i -e 's/^\([^#].*\)fileencryption=[^,]*\(.*\)$/# &\n\1encryptable\2/g' $i
+      file_changed $i $md5
+    fi
+  done
+}
+
+disable_fde() {
+  local md5
+  local i
+  fstab_files=`grep -lr 'forceencrypt' vendor/etc`
+
+  #
+  # Exynos devices = fstab.exynos*.
+  # MediaTek devices = fstab.mt*.
+  # Snapdragon devices = fstab.qcom, fstab.emmc, fstab.default
+  #
+  for i in $fstab_files; do
+    if [ -f $i ]; then
+      ui_print " - Disabling full-disk encryption (FDE) for /data..."
+      ui_print " -   Found $i."
+      md5=$( md5 $i )
+      # This comments out the offending line and adds an edited one.
+      sed -i -e 's/^\([^#].*\)forceencrypt=[^,]*\(.*\)$/# &\n\1encryptable\2/g' $i
+      file_changed $i $md5
+    fi
+  done
+}
+
+
+disable_frp() {
+  ui_print " - Disabling Factory Reset Protection (FRP)..."
+  sed -i 's/ro\.frp\.pst\=.*/ro\.frp\.pst\=/g' /product/etc/build.prop
+}
+
+fix_smart_view() {
+  ui_print " - Fixing Smart View..."
+  for i in "wlan.wfd.hdcp=disable" "wifi.interface=wlan0"; do
+    echo "$i" >> /system_root/system/build.prop
+  done
+}
+
+disable_apps() {
+	ui_print " - Cleaning up left over files..."
+	rm -f $ANDROID_ROOT/system/lib64/libbluetooth_jni.so.bak
+	if [ -f /tmp/essentials/bin/fstab.qcom ]; then
+		ui_print " - Custom fstab.qcom found..."	
+		rm -f vendor/etc/fstab.qcom
+		mv -f /tmp/essentials/bin/fstab.qcom /vendor/etc/fstab.qcom
+	elif [ -f /tmp/essentials/bin/fstab.s5e9925 ]; then
+		ui_print " - Custom fstab.s5e9925 found..."	
+		rm -f vendor/etc/fstab.s5e9925
+		mv -f /tmp/essentials/bin/fstab.s5e9925 /vendor/etc/fstab.s5e9925	
+	elif [ ! -f /tmp/essentials/bin/fstab.* ]; then 
+			ui_print " - No custom fstab found..."
+	fi
+
+}
+
+
+ui_print " "
+print_full_bar
+print_justified "Multi-disabler for Samsung devices"
+print_justified "running Android 9 or later."
+print_justified "by Ian Macdonald / corsicanu / afaneh92 / Simon1511"
+print_full_bar
+ui_print " "
+
+mount -o rw /system_root
+major=$(grep "ro.build.version.release=" /system_root/system/build.prop | sed 's/ro\.build\.version\.release\=//g')
+bl=$(getprop ro.boot.bootloader)
+dp=$(getprop ro.boot.dynamic_partitions)
+
+# Firmware version starts at either 8th or 9th character, depending on length
+# of bootloader string (12 or 13).
+#
+fw=${bl:$((${#bl} - 4)):4}
+
+# Device is first 5 characters of bootloader string.
+#
+device=${bl:0:$((${#bl} - 8))}
+mft=$(getprop ro.product.manufacturer | tr '[A-Z]' '[a-z]')
+
+if [ "$mft" != samsung ]; then
+  ui_print " - Device appears not to be made by Samsung."
+  fatal=true
+elif [ -z "$device" ]; then
+  ui_print " - Could not determine device model."
+  fatal=true
+elif [ $major -lt 9 ]; then
+  ui_print " - This software is incompatible with Android $major."
+  fatal=true
+fi
+
+# Check if running OneUI
+if ! grep -q "knox" /system_root/system/build.prop; then
+  ui_print " - Installed ROM doesn't appear to be OneUI."
+  fatal=true
+fi
+umount /system_root
+
+if [ -n "$fatal" ]; then
+  ui_print " - Installation aborted."
+  ui_print " "
+  exit 1
+fi
+
+ui_print " - Detected a $device device with a $fw bootloader."
+ui_print " - The environment appears to be Android $major."
+ui_print " "
+
+ui_print " - Mounting $ANDROID_ROOT..."
+mount $ANDROID_ROOT 2>/dev/null
+mount -o remount,rw $ANDROID_ROOT 2>/dev/null
+
+if ! mount | grep $ANDROID_ROOT >/dev/null; then
+  ANDROID_ROOT=/system_root
+  ui_print " -   Attempt failed. Mounting at $ANDROID_ROOT..."
+  mount -o rw $ANDROID_ROOT
+  if ! mount | grep $ANDROID_ROOT >/dev/null; then
+    ui_print " -   Even that attempt failed. Aborting..."
+    exit 2
+  fi
+fi
+
+ui_print " - Mounting /vendor..."
+mount /vendor
+mount -o remount,rw /vendor
+mount /product
+mount -o remount,rw /product
+
+if ! mount | grep /vendor >/dev/null; then
+  ui_print " -   Mount failed. Aborting..."
+  exit 3
+fi
+
+
+#disable_fbe
+#disable_fde
+#disable_avb
+#disable_frp
+#disable_recovery_restoration
+
+fix_smart_view
+disable_apps
+#disable_vaultkeeper
+#disable_proca
+#disable_tlc
+#disable_cass
+
+ui_print " - Unmounting /vendor..."
+umount /vendor
+ui_print " - Unmounting $ANDROID_ROOT..."
+umount $ANDROID_ROOT
+
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " - If this is first time using"
+ui_print " - You must manually format data in recovery"
+ui_print " - Or your storage size maybe wrong"
+ui_print " - Or data maybe corrupted"
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " "
+ui_print " - Finished."
+sleep 10
