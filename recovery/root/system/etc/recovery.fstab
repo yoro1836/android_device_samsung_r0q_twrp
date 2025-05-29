@@ -50,13 +50,13 @@ vendor_dlkm					/vendor_dlkm	f2fs	ro				wait,logical,first_stage_mount
 /dev/block/bootdevice/by-name/userdata		/data		f2fs	noatime,nosuid,nodev,discard,usrquota,grpquota,fsync_mode=nobarrier,reserve_root=32768,resgid=5678	wait,encryptable=footer,length=-16384,fscompress
 /dev/block/bootdevice/by-name/cache		/cache		ext4	defaults			recoveryonly
 #/dev/block/mmcblk0p1				/sdcard		vfat	defaults			recoveryonly
-/dev/block/bootdevice/by-name/efs		/efs		ext4	defaults			recoveryonly
-/dev/block/bootdevice/by-name/sec_efs		/sec_efs	ext4	defaults			recoveryonly
+/dev/block/bootdevice/by-name/efs		/mnt/vendor/efs		ext4	defaults			recoveryonly
+/dev/block/bootdevice/by-name/sec_efs		/efs	ext4	defaults			recoveryonly
 #/dev/block/bootdevice/by-name/carrier		/carrier	ext4	defaults			recoveryonly
 
 # FOTA
-/dev/block/bootdevice/by-name/apnhlos		/modem		emmc	defaults			recoveryonly
-/dev/block/bootdevice/by-name/modem		/mdm		emmc	defaults			recoveryonly
+/dev/block/bootdevice/by-name/apnhlos	/vendor/firmware_mnt		vfat	defaults			recoveryonly
+/dev/block/bootdevice/by-name/modem			/mdm		emmc	defaults			recoveryonly
 /dev/block/bootdevice/by-name/dsp		/dsp		emmc	defaults			recoveryonly
 
 # Add misc for GOTA

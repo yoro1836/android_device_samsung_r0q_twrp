@@ -1,7 +1,5 @@
 # Copyright (c) 2012-2015, 2017-2021, The Linux Foundation. All rights reserved.
 #
-# Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
-#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #     * Redistributions of source code must retain the above copyright
@@ -26,45 +24,11 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#
-# Changes from Qualcomm Innovation Center are provided under the following license:
-# Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted (subject to the limitations in the
-# disclaimer below) provided that the following conditions are met:
-#
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#
-#     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following
-#       disclaimer in the documentation and/or other materials provided
-#       with the distribution.
-#
-#     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of
-#       its contributors may be used to endorse or promote products derived
-#       from this software without specific prior written permission.
-#
-# NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
-# GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
-# HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
-# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-# IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 
 # Firmware directory Path
 # Below macro will be read by uevent and path will
 # be added to search path for firmware loading
-firmware_directories /vendor/firmware_mnt/image/ /vendor/firmware-modem/image/ /vendor/vm-system/
+firmware_directories /vendor/firmware_mnt/image/ /vendor/firmware-modem/image/ /vendor/firmware/wifi/ /vendor/firmware/ /spu/ /vendor/vm-system/
 
 subsystem dma_heap
     devname uevent_devpath
@@ -91,7 +55,7 @@ subsystem mem_buf_vm
 /dev/dma_heap/qcom,*      0444   system     system
 /dev/rtc0                 0660   system     system
 /dev/smd0                 0660   system     system
-/dev/smd4                 0660   system     bridge_rw
+/dev/smd4                 0660   system     system_ext_bridge_rw
 /dev/smd_cxm_qmi          0640   radio      radio
 /dev/smd5                 0660   system     system
 /dev/smd6                 0660   system     system
@@ -99,7 +63,6 @@ subsystem mem_buf_vm
 /dev/ccid_bridge          0660   system     system
 /dev/ipa                  0660   radio      radio
 /dev/wwan_ioctl           0660   radio      radio
-/dev/ipa_lnx_stats_ioctl  0640   radio      radio
 /dev/ipaNatTable          0660   radio      radio
 /dev/rmnet_ctrl           0660   usb        usb
 /dev/dpl_ctrl             0660   usb        usb
@@ -112,11 +75,11 @@ subsystem mem_buf_vm
 # dev ril bridge
 /dev/drb                  0660   system     radio
 
-#permissions for UFS RPMB BSG device node
-/dev/0:0:0:49476          0600   system     system
-
 # SSR node for SRIL
 /sys/devices/platform/soc/4080000.remoteproc-mss	ssr	0660	system	radio
+
+#permissions for UFS RPMB BSG device node
+/dev/0:0:0:49476          0600   system     system
 
 #permissions for USB
 /dev/usb_mtp_gadget      0660     system        mtp
@@ -157,8 +120,8 @@ subsystem mem_buf_vm
 #permissions usb whitelist
 /sys/class/usb_notify/usb_control   whitelist_for_mdm      0664     system        usb
 
-#permissions for GPT listener on LUN4
-/dev/0:0:0:4              0600   system     root
+#permissions secure_lock
+/sys/class/usb_notify/usb_control   usb_sl      0664     system        usb
 
 #permissions for CSVT
 /dev/smd11                0660   radio      radio
@@ -167,7 +130,6 @@ subsystem mem_buf_vm
 /dev/smd2                 0660   bluetooth  bluetooth
 /dev/smd3                 0660   bluetooth  bluetooth
 /dev/btpower              0660   bluetooth  system
-/dev/btfmslim             0660   bluetooth  system
 
 #permissions for pta
 /dev/pta                  0660   system     system
@@ -261,7 +223,6 @@ subsystem mem_buf_vm
 
 #QDSS
 /dev/byte-cntr            0660   system    oem_2902
-/dev/byte-cntr1            0660   system    oem_2902
 /dev/mhi_qdss             0660   system    oem_2902
 /sys/class/qdss_bridge/mhi_qdss  mode      0660     system   oem_2902
 
@@ -272,19 +233,8 @@ subsystem mem_buf_vm
 #qvr
 /dev/qvr_external_sensor_ioctl      0660  system  system
 /sys/kernel/qvr_external_sensor/fd  0660  system  system
-/dev/bus/usb/001/002      0660   system     system
-/dev/bus/usb/001/003      0660   system     system
-/dev/bus/usb/001/004      0660   system     system
-/dev/bus/usb/001/005      0660   system     system
-/dev/bus/usb/002/002      0660   system     system
-/dev/bus/usb/002/003      0660   system     system
-/dev/bus/usb/002/004      0660   system     system
-/dev/bus/usb/002/005      0660   system     system
-/dev/bus/usb/003/002      0660   system     system
-/dev/bus/usb/003/003      0660   system     system
-/dev/bus/usb/003/004      0660   system     system
-/dev/bus/usb/003/005      0660   system     system
-/dev/hidraw*              0660   system     system
+/dev/bus/usb/*                      0660  root    usb
+/dev/hidraw*                        0660  root    usb
 
 # wlan
 /dev/wcnss_wlan           0660   system     system
@@ -303,7 +253,8 @@ subsystem mem_buf_vm
 /dev/msm_vidc_dec_sec     0660   system     audio
 /dev/msm_vidc_enc         0660   system     audio
 /dev/msm_rotator          0660   system     system
-/dev/hw_random            0600   root       root
+# Aside from kernel threads, only prng_seeder needs access to HW RNG
+/dev/hw_random            0400   prng_seeder prng_seeder
 /dev/sdsprpc-smd          0660   system     system
 
 #permissions for audio
@@ -407,35 +358,6 @@ subsystem mem_buf_vm
 /sys/devices/virtual/input/input*                   set_delay_ms     0660  system   input
 /sys/devices/virtual/input/input*                   do_flush         0660  system   input
 
-# grip sensor access
-/sys/devices/virtual/input/input*                   enable           0660  root     input
-
-# Range Sensor
-/dev/range_sensor	0660	system system
-
-/sys/class/sensors/range_sensor	ambient		0440	 system	radio
-/sys/class/sensors/range_sensor	cal01		0440	 system	radio
-/sys/class/sensors/range_sensor	cal02		0440	 system	radio
-/sys/class/sensors/range_sensor	cal_uid		0440	 system	radio
-/sys/class/sensors/range_sensor	calibration	0660	 system	radio
-/sys/class/sensors/range_sensor	open_calibration	0660	 system	radio
-/sys/class/sensors/range_sensor	enable		0660	 system	radio
-/sys/class/sensors/range_sensor	frame_rate	0440	 system	radio
-/sys/class/sensors/range_sensor	fw_version	0440	 system	radio
-/sys/class/sensors/range_sensor	mode		0440	 system	radio
-/sys/class/sensors/range_sensor	name		0440	 system	radio
-/sys/class/sensors/range_sensor	range_sigma	0440	 system	radio
-/sys/class/sensors/range_sensor	status		0440	 system	radio
-/sys/class/sensors/range_sensor	target_status	0440	 system	radio
-/sys/class/sensors/range_sensor	temp		0440	 system	radio
-/sys/class/sensors/range_sensor	test01		0440	 system	radio
-/sys/class/sensors/range_sensor	test02		0440	 system	radio
-/sys/class/sensors/range_sensor	test03		0440	 system	radio
-/sys/class/sensors/range_sensor	test_mode	0660	 system	radio
-/sys/class/sensors/range_sensor	uid			0440	 system	radio
-/sys/class/sensors/range_sensor	vendor		0440	 system	radio
-/sys/class/sensors/range_sensor	zone		0440	 system	radio
-
 # vm_bms
 /dev/vm_bms               0660   system     system
 /dev/battery_data         0660   system     system
@@ -458,10 +380,6 @@ subsystem mem_buf_vm
 /dev/nfc-nci              0660    nfc         nfc
 /dev/nq-nci               0660    nfc         nfc
 /dev/assd                 0660    nfc         nfc
-/dev/st21nfc              0660    nfc         nfc
-
-# eSE permissions
-/dev/st54spi_gpio         0660   system     system
 
 # UIO devices
 /dev/uio0                 0660   system     system
@@ -489,10 +407,6 @@ subsystem mem_buf_vm
 /dev/hbtp_input           0660   system     system
 /dev/hbtp_vm              0660   system     system
 
-# LegacyTouch device
-/sys/kernel/qts/primary/trusted_touch*    0660   system     system
-/sys/kernel/qts/secondary/trusted_touch*  0660   system     system
-
 # Add device block for FRP
 /dev/block/platform/soc/7824900.sdhci/by-name/config    0600   system     system
 /dev/block/platform/soc/7464900.sdhci/by-name/frp       0600   system     system
@@ -503,6 +417,8 @@ subsystem mem_buf_vm
 /dev/block/platform/soc/7c4000.sdhci/by-name/frp        0600   system     system
 /dev/block/platform/soc/4744000.sdhci/by-name/frp       0600   system     system
 /dev/block/platform/soc/4804000.ufshc/by-name/frp       0600   system     system
+/dev/block/platform/soc/7c4000.sdhci/by-name/rawdump       0660   root     system
+/dev/block/platform/soc/1d84000.ufshc/by-name/rawdump       0660   root     system
 
 # This is temporary while using SD card for initial bring-up
 /dev/block/platform/soc/8804000.sdhci/by-name/frp       0600   system     system
@@ -540,9 +456,6 @@ subsystem mem_buf_vm
 /sys/class/dual_role_usb/*	data_role	0660	system	system
 /sys/class/dual_role_usb/*	power_role	0660	system	system
 /sys/class/dual_role_usb/*	mode		0660	system	system
-
-# USB Dynamic Disable
-/sys/bus/platform/devices/a600000.ssusb	dynamic_disable	0220	root	usb
 
 #Memory Offline
 /sys/devices/system/memory/memory* state    0660 system system
@@ -658,14 +571,12 @@ subsystem mem_buf_vm
 /sys/class/sensors/als_rear    write_reg               0220    system    system
 /sys/class/sensors/als_rear    read_reg                0664    system    system
 /sys/class/sensors/als_rear    eol_mode                0664    system    system
-/sys/class/sensors/als_rear    osc_cal                 0664    system    system
 /sys/class/sensors/als_rear    als_factory_cmd         0444    system    system
 /sys/class/sensors/als_rear    als_red                 0444    system    system
 /sys/class/sensors/als_rear    als_green               0444    system    system
 /sys/class/sensors/als_rear    als_blue                0444    system    system
 /sys/class/sensors/als_rear    als_ir                  0444    system    system
 /sys/class/sensors/als_rear    als_clear               0444    system    system
-/sys/class/sensors/als_rear    als_uv                  0444    system    system
 /sys/class/sensors/als_rear    als_wideband            0444    system    system
 /sys/class/sensors/als_rear    als_version             0444    system    system
 /sys/class/sensors/als_rear    als_raw_data            0444    system    system
@@ -679,8 +590,6 @@ subsystem mem_buf_vm
 /sys/class/sensors/als_rear    als_enable              0664    system    system
 /sys/class/sensors/als_rear    als_data                0444    system    system
 /dev/als_rear                                          0600    system    system
-/sys/devices/virtual/input/input*    enable            0660    system    input
-/sys/devices/virtual/input/input*    poll_delay        0660    system    input
 
 # Camera Start
 # Camera::Rear Start
@@ -723,20 +632,6 @@ subsystem mem_buf_vm
 /sys/class/camera/rear    rear_tofcal_uid           0444    system    system
 /sys/class/camera/rear    rear_tof_dual_cal         0444    system    system
 /sys/class/camera/rear    rear_actuator_power       0440    system    system
-/sys/class/camera/rear    rear_otp_bpc0             0664    system    system
-/sys/class/camera/rear    rear_otp_bpc1             0664    system    system
-/sys/class/camera/rear    rear_otp_bpc2             0664    system    system
-/sys/class/camera/rear    rear_otp_bpc3             0664    system    system
-/sys/class/camera/rear    rear_otp_bpc4             0664    system    system
-/sys/class/camera/rear    rear_otp_bpc5             0664    system    system
-/sys/class/camera/rear    rear_otp_bpc6             0664    system    system
-/sys/class/camera/rear    rear_otp_bpc7             0664    system    system
-/sys/class/camera/rear    rear_otp_bpc8             0664    system    system
-/sys/class/camera/rear    cam_cdr_value             0664    system    system
-/sys/class/camera/rear    cam_cdr_result            0664    system    system
-/sys/class/camera/rear    cam_cdr_fastaec           0664    system    system
-/sys/class/camera/rear    rear_i2c_rfinfo           0664    system    system
-/sys/class/camera/rear    rear_eeprom_retry         0664    system    system
 
 # Camera::Rear2
 /sys/class/camera/rear    rear2_camfw               0664    system    system
@@ -766,7 +661,6 @@ subsystem mem_buf_vm
 /sys/class/camera/rear    rear2_hwparam             0664    system    system
 /sys/class/camera/rear    rear2_tilt                0444    system    system
 /sys/class/camera/rear    rear2_tof_tilt            0444    system    system
-/sys/class/camera/rear    rear2_eeprom_retry         0664    system    system
 
 # Camera::Rear3
 /sys/class/camera/rear    rear3_camfw               0664    system    system
@@ -795,7 +689,6 @@ subsystem mem_buf_vm
 /sys/class/camera/rear    rear3_dualcal_size        0444    system    system
 /sys/class/camera/rear    rear3_hwparam             0664    system    system
 /sys/class/camera/rear    rear3_tilt                0444    system    system
-/sys/class/camera/rear    rear3_eeprom_retry         0664    system    system
 
 # Camera::Rear4
 /sys/class/camera/rear    rear4_camfw               0664    system    system
@@ -824,7 +717,6 @@ subsystem mem_buf_vm
 /sys/class/camera/rear    rear4_dualcal_size        0444    system    system
 /sys/class/camera/rear    rear4_hwparam             0664    system    system
 /sys/class/camera/rear    rear4_tilt                0444    system    system
-/sys/class/camera/rear    rear4_eeprom_retry        0664    system    system
 
 # Camera::Rear End
 
@@ -849,7 +741,6 @@ subsystem mem_buf_vm
 /sys/class/camera/front    front_tofcal_extra       0664    system    system
 /sys/class/camera/front    front_tofcal_size        0664    system    system
 /sys/class/camera/front    front_tofcal_uid         0664    system    system
-/sys/class/camera/front    front_eeprom_retry       0664    system    system
 
 # Camera::Front2
 /sys/class/camera/front    front2_camfw             0664    system    system
@@ -943,11 +834,135 @@ subsystem mem_buf_vm
 /sys/devices/svc/Camera    SVC_rear_module4           0444    system    system
 /sys/devices/svc/Camera    SVC_front_module           0444    system    system
 /sys/devices/svc/Camera    SVC_front_module2          0444    system    system
+/sys/devices/svc/Camera    SVC_rear_module_type       0444    system    system
+/sys/devices/svc/Camera    SVC_rear_module2_type      0444    system    system
+/sys/devices/svc/Camera    SVC_rear_module3_type      0444    system    system
+/sys/devices/svc/Camera    SVC_rear_module4_type      0444    system    system
+/sys/devices/svc/Camera    SVC_front_module_type      0444    system    system
+/sys/devices/svc/Camera    SVC_front_module2_type     0444    system    system
 
 #Camera SETCAL
 /mnt/vendor/efs    camera           0775    system    system
 
 # Camera End
+
+
+# Range Sensor
+/dev/range_sensor	0660	system system
+
+/sys/class/sensors/range_sensor	ambient		0440	 system	radio
+/sys/class/sensors/range_sensor	cal01		0440	 system	radio
+/sys/class/sensors/range_sensor	cal02		0440	 system	radio
+/sys/class/sensors/range_sensor	cal_uid		0440	 system	radio
+/sys/class/sensors/range_sensor	calibration	0660	 system	radio
+/sys/class/sensors/range_sensor	open_calibration	0660	 system	radio
+/sys/class/sensors/range_sensor	enable		0660	 system	radio
+/sys/class/sensors/range_sensor	frame_rate	0440	 system	radio
+/sys/class/sensors/range_sensor	fw_version	0440	 system	radio
+/sys/class/sensors/range_sensor	mode		0440	 system	radio
+/sys/class/sensors/range_sensor	name		0440	 system	radio
+/sys/class/sensors/range_sensor	range_sigma	0440	 system	radio
+/sys/class/sensors/range_sensor	status		0440	 system	radio
+/sys/class/sensors/range_sensor	target_status	0440	 system	radio
+/sys/class/sensors/range_sensor	temp		0440	 system	radio
+/sys/class/sensors/range_sensor	test01		0440	 system	radio
+/sys/class/sensors/range_sensor	test02		0440	 system	radio
+/sys/class/sensors/range_sensor	test03		0440	 system	radio
+/sys/class/sensors/range_sensor	test_mode	0660	 system	radio
+/sys/class/sensors/range_sensor	uid		0440	 system	radio
+/sys/class/sensors/range_sensor	vendor		0440	 system	radio
+/sys/class/sensors/range_sensor	zone		0440	 system	radio
+
+# TrustedUI VM
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.mdt system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b00 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b01 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b02 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b03 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b04 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b05 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b06 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b07 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b08 system "/vendor/bin/vmmgr -r"
+external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@e0b00000/firmware/trustedvm.b09 system "/vendor/bin/vmmgr -r"
+
+# TSP
+/sys/class/sec/tsp				cmd							0660	system radio
+/sys/class/sec/tsp				enabled						0660	system system
+/sys/class/sec/tsp/input		enabled						0660	system system
+/sys/class/sec/tsp				sensitivity_mode			0664	system system
+/sys/class/sec/tsp				prox_power_off				0664	system system
+/sys/class/sec/tsp				ear_detect_enable			0664	system system
+/sys/class/sec/tsp				virtual_prox				0664	system system
+/sys/class/sec/tsp				hw_param					0664	system system
+/sys/class/sec/tsp				dualscreen_policy			0660	system system
+
+# TSP-1 (DUAL)
+/sys/class/sec/tsp1				cmd							0660	system radio
+/sys/class/sec/tsp1/input		enabled						0660	system system
+/sys/class/sec/tsp1				sensitivity_mode			0664	system system
+/sys/class/sec/tsp1				prox_power_off				0664	system system
+/sys/class/sec/tsp1				hw_param					0664	system system
+/sys/class/sec/tsp1				dualscreen_policy			0660	system system
+
+# TSP-2 (DUAL)
+/sys/class/sec/tsp2				cmd							0660	system radio
+/sys/class/sec/tsp2/input		enabled						0660	system system
+/sys/class/sec/tsp2				sensitivity_mode			0664	system system
+/sys/class/sec/tsp2				prox_power_off				0664	system system
+/sys/class/sec/tsp2				hw_param					0664	system system
+/sys/class/sec/tsp2				dualscreen_policy			0660	system system
+
+# Securetouch
+/sys/class/sec/ss_touch/secure	secure_touch_enable			0664	system system
+
+# Fingerprint
+/dev/esfp0						0660	system	system
+/dev/goodix_fp					0660	system	system
+/dev/qbt2000_fd					0660	system	system
+/dev/qbt2000_ipc				0660	system	system
+/dev/qbtspi						0660	system	system
+/sys/class/fingerprint/fingerprint type_check	0444	system radio
+/sys/class/fingerprint/fingerprint name			0444	system radio
+/sys/class/fingerprint/fingerprint vendor		0444	system radio
+/sys/class/fingerprint/fingerprint adm			0444	system radio
+/sys/class/fingerprint/fingerprint bfs_values	0444	system radio
+/sys/class/fingerprint/fingerprint position		0444	system radio
+/sys/class/fingerprint/fingerprint cbgecnt		0664	system radio
+/sys/class/fingerprint/fingerprint intcnt		0664	system radio
+/sys/class/fingerprint/fingerprint resetcnt		0664	system radio
+/sys/class/fingerprint/fingerprint wuhbtest		0444	system radio
+/sys/class/fingerprint/fingerprint rb			0444	system radio
+
+# WACOM
+/sys/class/sec/sec_epen/input		enabled 					0660	system system
+/sys/class/sec/sec_epen			enabled 					0660	system system
+/sys/class/sec/sec_epen 		cmd 						0220	system radio
+/sys/class/sec/sec_epen 		epen_firm_update			0220	system radio
+/sys/class/sec/sec_epen 		epen_reset					0220	system radio
+/sys/class/sec/sec_epen 		epen_reset_result			0444	system radio
+/sys/class/sec/sec_epen 		epen_checksum				0220	system radio
+/sys/class/sec/sec_epen 		epen_checksum_result		0444	system radio
+/sys/class/sec/sec_epen 		epen_saving_mode			0220	system radio
+/sys/class/sec/sec_epen 		epen_wcharging_mode 		0664	system radio
+/sys/class/sec/sec_epen 		epen_ble_charging_mode		0664	system radio
+/sys/class/sec/sec_epen 		keyboard_mode				0660	system radio
+/sys/class/sec/sec_epen 		epen_disable_mode			0220	system radio
+/sys/class/sec/sec_epen 		aod_enable					0220	system radio
+/sys/class/sec/sec_epen 		aod_lcd_onoff_status		0220	system radio
+/sys/class/sec/sec_epen 		screen_off_memo_enable		0220	system radio
+/sys/class/sec/sec_epen 		epen_fac_garage_mode		0664	system radio
+/sys/class/sec/sec_epen 		epen_fac_select_firmware	0220	system radio
+/sys/class/sec/sec_epen 		hw_param					0664	system system
+
+# Pogo Keyboard
+/sys/class/sec/sec_keypad		fw_update					0220	system system
+
+# Folding digital hall ic
+/sys/class/sec/digital_hall		digital_hall_thd			0644	system system
+
+# Power on alarm
+/dev/power_on_alarm       0664   system     radio
 
 #
 # Permissions for Vibrator [
@@ -985,6 +1000,9 @@ subsystem mem_buf_vm
 /sys/class/sec_vib_inputff/control	use_sep_index		0220	system system
 /sys/class/sec_vib_inputff/control	event_cmd			0664	system system
 
+# PROCA dev config
+/dev/proca_config         0440   system     system
+
 # Vibrator nodes permission (vib_info)
 /sys/class/vib_info_class/vib_support_info	intensities			0664	system system
 /sys/class/vib_info_class/vib_support_info	haptic_intensities	0664	system system
@@ -994,91 +1012,5 @@ subsystem mem_buf_vm
 # ] Permissions for Vibrator
 #
 
-# TSP
-/sys/class/sec/tsp				cmd							0660	system radio
-/sys/class/sec/tsp				enabled						0660	system system
-/sys/class/sec/tsp/input		enabled						0660	system system
-/sys/class/sec/tsp				sensitivity_mode			0664	system system
-/sys/class/sec/tsp				prox_power_off				0664	system system
-/sys/class/sec/tsp				ear_detect_enable			0664	system system
-/sys/class/sec/tsp				virtual_prox				0664	system system
-/sys/class/sec/tsp				hw_param					0664	system system
-/sys/class/sec/tsp				dualscreen_policy			0660	system system
-
-# TSP-1 (DUAL)
-/sys/class/sec/tsp1				cmd							0660	system radio
-/sys/class/sec/tsp1/input		enabled						0660	system system
-/sys/class/sec/tsp1				sensitivity_mode			0664	system system
-/sys/class/sec/tsp1				prox_power_off				0664	system system
-/sys/class/sec/tsp1				hw_param					0664	system system
-/sys/class/sec/tsp1				dualscreen_policy			0660	system system
-
-# TSP-2 (DUAL)
-/sys/class/sec/tsp2				cmd							0660	system radio
-/sys/class/sec/tsp2/input		enabled						0660	system system
-/sys/class/sec/tsp2				sensitivity_mode			0664	system system
-/sys/class/sec/tsp2				prox_power_off				0664	system system
-/sys/class/sec/tsp2				hw_param					0664	system system
-/sys/class/sec/tsp2				dualscreen_policy			0660	system system
-
-# Securetouch
-/sys/class/sec/ss_touch/secure	secure_touch_enable			0664	system system
-
-# WACOM
-/sys/class/sec/sec_epen/input	enabled 					0660	system system
-/sys/class/sec/sec_epen			enabled 					0660	system system
-/sys/class/sec/sec_epen 		cmd 						0220	system radio
-/sys/class/sec/sec_epen 		epen_firm_update			0220	system radio
-/sys/class/sec/sec_epen 		epen_reset					0220	system radio
-/sys/class/sec/sec_epen 		epen_reset_result			0444	system radio
-/sys/class/sec/sec_epen 		epen_checksum				0220	system radio
-/sys/class/sec/sec_epen 		epen_checksum_result		0444	system radio
-/sys/class/sec/sec_epen 		epen_saving_mode			0220	system radio
-/sys/class/sec/sec_epen 		epen_wcharging_mode 		0664	system radio
-/sys/class/sec/sec_epen 		epen_ble_charging_mode		0664	system radio
-/sys/class/sec/sec_epen 		keyboard_mode				0660	system radio
-/sys/class/sec/sec_epen 		epen_disable_mode			0660	system system
-/sys/class/sec/sec_epen 		aod_enable					0220	system radio
-/sys/class/sec/sec_epen 		aod_lcd_onoff_status		0220	system radio
-/sys/class/sec/sec_epen 		screen_off_memo_enable		0220	system radio
-/sys/class/sec/sec_epen 		epen_fac_garage_mode		0664	system radio
-/sys/class/sec/sec_epen 		epen_fac_select_firmware	0220	system radio
-/sys/class/sec/sec_epen 		hw_param					0664	system system
-
-# Pogo Keyboard
-/sys/class/sec/sec_keypad		fw_update					0220	system system
-
-# Folding digital hall ic
-/sys/class/sec/digital_hall		digital_hall_thd			0644	system system
-
-# TrustedUI VM
-external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@f3c00000/firmware/trustedvm.mdt system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@f3c00000/firmware/trustedvm.b00 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@f3c00000/firmware/trustedvm.b01 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@f3c00000/firmware/trustedvm.b02 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@f3c00000/firmware/trustedvm.b03 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@f3c00000/firmware/trustedvm.b04 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:qcom,guestvm_loader@f3c00000/firmware/trustedvm.b05 system "/vendor/bin/vmmgr -r"
-
-external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@0/firmware/trustedvm.mdt system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@0/firmware/trustedvm.b00 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@0/firmware/trustedvm.b01 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@0/firmware/trustedvm.b02 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@0/firmware/trustedvm.b03 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@0/firmware/trustedvm.b04 system "/vendor/bin/vmmgr -r"
-external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@0/firmware/trustedvm.b05 system "/vendor/bin/vmmgr -r"
-
-# TEEGRIS
-/dev/tzdev                0666   system     system
-/dev/tziwsock             0666   system     system
-/dev/tziwshmem            0660   system     system
-/dev/tzirs                0660   system     system
-
-# PROCA dev config
-/dev/proca_config         0440   system     system
-
-# SecNVM
-/dev/k250a                0660   system     system
-
-# Power on alarm
-/dev/power_on_alarm       0664   system     radio
+# k250
+/dev/k250a    0660    system system
