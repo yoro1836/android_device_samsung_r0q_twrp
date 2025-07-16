@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018,2020-2021 The Linux Foundation. All rights reserved.
+# Copyright (c) 2017-2018,2020 The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -24,18 +24,13 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
 import /init.recovery.qcom_decrypt.rc
 
 on init
-    write /sys/class/backlight/panel0-backlight/brightness 200
-    setprop sys.usb.controller a600000.dwc3
-    setprop sys.usb.configfs 1
-
-on property:ro.boot.usbcontroller=*
-#    setprop sys.usb.controller ${ro.boot.usbcontroller}
-    wait /sys/bus/platform/devices/${ro.boot.usb.dwc3_msm:-a600000.ssusb}/mode
-    write /sys/bus/platform/devices/${ro.boot.usb.dwc3_msm:-a600000.ssusb}/mode peripheral
-    wait /sys/class/udc/${ro.boot.usbcontroller} 1
+    # to cut charging battery path
+    write /sys/class/power_supply/battery/siop_level 0
+    setprop prepdecrypt.setpatch true
 
 on fs
     wait /dev/block/platform/soc/${ro.boot.bootdevice}
@@ -43,16 +38,20 @@ on fs
 
     # Mount firmware
     mkdir /vendor/firmware_mnt
-    mount vfat /dev/block/bootdevice/by-name/apnhlos /vendor/firmware_mnt ro
+    mount vfat /dev/block/bootdevice/by-name/apnhlos /vendor/firmware_mnt
 
-    # Mount efs
-    mkdir /mnt/vendor/efs
-    mount ext4 /dev/block/bootdevice/by-name/efs /mnt/vendor/efs 
-    mkdir /efs
-    mount ext4 /dev/block/bootdevice/by-name/sec_efs /efs
+    export ANDROID_ROOT /system_root
 
-service keystore2 /system/bin/keystore2 /data/misc/keystore
-    class early_hal
-    user keystore
-    group keystore readproc log 5666 5678
-    task_profiles ProcessCapacityHigh
+on boot
+    start health-hal-2-1
+
+on property:crypto.ready=1
+    start keymint-default
+    start keymaster-sb-4-0
+
+on property:crypto.ready=0
+    stop keymaster-sb-4-0
+    stop keymint-default
+
+on property:twrp.user.0.decrypt=0
+    umount /vendor/firmware_mnt
